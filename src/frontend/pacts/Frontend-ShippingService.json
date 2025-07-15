@@ -1,0 +1,61 @@
+{
+  "consumer": {
+    "name": "Frontend"
+  },
+  "interactions": [
+    {
+      "description": "a request for shipping quote",
+      "providerState": "shipping quote exists",
+      "request": {
+        "body": {
+          "address": {
+            "city": "Mountain View",
+            "country": "US",
+            "state": "CA",
+            "street_address": "1600 Amphitheatre Parkway",
+            "zip_code": "94043"
+          },
+          "items": [
+            {
+              "product_id": "1",
+              "quantity": 2
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/get-quote"
+      },
+      "response": {
+        "body": {
+          "cost_usd": {
+            "currency_code": "USD",
+            "nanos": 990000000,
+            "units": 5
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "15.0.1"
+    },
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  },
+  "provider": {
+    "name": "ShippingService"
+  }
+}

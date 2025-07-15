@@ -8,7 +8,8 @@
     "start": "node --require ./Instrumentation.js server.js",
     "lint": "next lint",
     "cy:open": "cypress open",
-    "grpc:generate": "mkdir -p ./protos && protoc -I ./pb  --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=esModuleInterop=true --ts_proto_out=./protos --ts_proto_opt=outputServices=grpc-js demo.proto"
+    "grpc:generate": "mkdir -p ./protos && protoc -I ./pb  --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_opt=esModuleInterop=true --ts_proto_out=./protos --ts_proto_opt=outputServices=grpc-js demo.proto",
+    "test:pact": "jest --testTimeout=30000"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.6.0",
@@ -49,6 +50,8 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
+    "@pact-foundation/pact": "^15.0.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "24.0.13",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
@@ -61,7 +64,9 @@
     "eslint-config-next": "15.3.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "5.2.0",
+    "jest": "^30.0.4",
     "openapi-typescript": "7.8.0",
+    "ts-jest": "^29.4.0",
     "ts-proto": "2.7.5",
     "typescript": "5.8.3"
   }
