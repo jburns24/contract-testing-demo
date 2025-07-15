@@ -5,7 +5,7 @@ use std::sync::Arc;
 use actix_web::{App, HttpServer};
 use async_trait::async_trait;
 use pact_verifier::callback_executors::{NullRequestFilterExecutor, ProviderStateExecutor};
-use pact_verifier::{FilterInfo, ProviderInfo, ProviderTransport, VerificationOptions, PactSource};
+use pact_verifier::{FilterInfo, ProviderInfo, ProviderTransport, VerificationOptions, PactSource, PublishOptions};
 use pact_models::http_utils::HttpAuth;
 use portpicker::pick_unused_port;
 
@@ -85,7 +85,23 @@ async fn verify_shipping_pact() {
         run_last_failed_only: false,
     };
 
-    // Simple provider state executor that does nothing and always succeeds.
+    // -----------------------------------------------------------------
+    // Provider State Executor
+    // -----------------------------------------------------------------
+    // Pacts can include one or more `providerStates` that describe the data
+    // or system pre-conditions the provider must satisfy before an
+    // interaction is verified (for example: "order ABC exists").
+    //
+    // During verification the Pact framework calls `ProviderStateExecutor::call`
+    // with the state name and a `setup` flag (`true` before the interaction,
+    // `false` after) giving us a chance to create records, seed databases, or
+    // stub external services. After all interactions the verifier may invoke
+    // `teardown()` allowing cleanup.
+    //
+    // For now our consumer pact does **not** define any provider states, so a
+    // *no-op* implementation is sufficient.  If you later add
+    // `providerStates` to the consumer tests **replace this executor** with
+    // logic that prepares (and optionally cleans up) the required state.
     #[derive(Debug, Clone)]
     struct NoOpProviderState;
 
@@ -108,6 +124,31 @@ async fn verify_shipping_pact() {
 
     let provider_state_executor = Arc::new(NoOpProviderState);
 
+    // -----------------------------------------------------------------
+    // Publishing verification results back to the Pact Broker
+    // -----------------------------------------------------------------
+    // CI pipelines set `GIT_COMMIT` and `GIT_BRANCH` so we can associate the
+    // verification results with a concrete provider version/branch in the
+    // Pact Broker. Supplying these via `PublishOptions` enables the Broker's
+    // "can-i-deploy?" gate and visual history.
+    //
+    // Local runs usually *lack* these env vars, so we treat that case as
+    // "do not publish" to avoid errors and unnecessary Broker noise.
+    //
+    // If you want to publish results from another environment, ensure the
+    // equivalent metadata is exported or adjust this block to obtain the
+    // commit/branch info by another means (e.g. using the `git2` crate).
+    let publish_options = if let (Ok(commit), Ok(branch)) = (std::env::var("GIT_COMMIT"), std::env::var("GIT_BRANCH")) {
+        Some(PublishOptions {
+            provider_version: Some(commit),
+            build_url: None,
+            provider_tags: vec![],
+            provider_branch: Some(branch),
+        })
+    } else {
+        None
+    };
+
     // Run the verifier against the pact file.
     let result = pact_verifier::verify_provider_async(
         provider_info,
@@ -115,7 +156,7 @@ async fn verify_shipping_pact() {
         FilterInfo::None,
         vec![],
         &verification_options,
-        None,
+        publish_options.as_ref(),
         &provider_state_executor,
         None,
     )
