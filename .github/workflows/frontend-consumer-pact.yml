@@ -1,4 +1,4 @@
-name: Pact Consumer - Shipping Gateway
+name: Pact Consumer - Frontend
 
 on:
   push:
