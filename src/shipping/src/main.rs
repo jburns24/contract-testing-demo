@@ -6,10 +6,10 @@ use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 use std::env;
 use tracing::info;
 
-mod telemetry_conf;
-use telemetry_conf::init_otel;
-mod shipping_service;
-use shipping_service::{get_quote, ship_order};
+
+use shipping::telemetry_conf::init_otel;
+
+use shipping::shipping_service::{get_quote, ship_order};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

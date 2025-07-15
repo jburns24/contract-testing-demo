@@ -1,0 +1,104 @@
+# TODO: build Docker image and push to GHCR in the deploy step below
+name: Pact Provider - Shipping Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/shipping/**'
+      - 'src/frontend/pacts/**/*.json'
+      - '.github/workflows/shipping-provider-pact.yml'
+  pull_request:
+    paths:
+      - 'src/shipping/**'
+      - 'src/frontend/pacts/**/*.json'
+      - '.github/workflows/shipping-provider-pact.yml'
+  workflow_dispatch:
+
+jobs:
+  pact-provider-tests:
+    name: Run provider pact verification tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src/shipping
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-build-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            cargo-build-${{ runner.os }}-
+
+      - name: Run provider pact verification tests
+        # Limit to the integration test that runs pact_verifier
+        env:
+          # Provide broker details for the test code (PACT_BROKER_URL) **and** for the Pact CLI (PACT_BROKER_BASE_URL)
+          PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          # Expose commit SHA and branch name to the test binary so it can publish results
+          export GIT_COMMIT=$(git rev-parse HEAD)
+          export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          cargo test --test contract_verification --no-fail-fast -- --nocapture
+
+      - name: Can I Deploy?
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          GIT_COMMIT=$(git rev-parse HEAD)
+          # Use Pact CLI to check if this provider version can be deployed
+          docker run --rm \
+            -e PACT_BROKER_BASE_URL \
+            -e PACT_BROKER_USERNAME \
+            -e PACT_BROKER_PASSWORD \
+            pactfoundation/pact-cli:latest \
+            broker can-i-deploy \
+            --pacticipant ShippingService \
+            --version ${GIT_COMMIT} \
+            --to production
+
+      - name: Deploy (placeholder)
+        run: echo "Deploying ShippingService ... (placeholder)"
+
+      - name: Tag provider version as production
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          GIT_COMMIT=$(git rev-parse HEAD)
+          # Mark this provider version as deployed to production in the Pact Broker
+          docker run --rm \
+            -e PACT_BROKER_BASE_URL \
+            -e PACT_BROKER_USERNAME \
+            -e PACT_BROKER_PASSWORD \
+            pactfoundation/pact-cli:latest \
+            broker create-or-update-version \
+            --pacticipant ShippingService \
+            --version ${GIT_COMMIT} \
+            --tag production
