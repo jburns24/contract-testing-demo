@@ -6,13 +6,13 @@ on:
       - 'src/frontend/gateways/http/**'
       - 'src/frontend/**/*.spec.ts'
       - 'src/frontend/package.json'
-      - '.github/workflows/pact-consumer.yml'
+      - '.github/workflows/frontend-consumer-pact.yml'
   pull_request:
     paths:
       - 'src/frontend/gateways/http/**'
       - 'src/frontend/**/*.spec.ts'
       - 'src/frontend/package.json'
-      - '.github/workflows/pact-consumer.yml'
+      - '.github/workflows/frontend-consumer-pact.yml'
 
 jobs:
   pact-consumer-tests:
