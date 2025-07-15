@@ -98,7 +98,7 @@ jobs:
             -e PACT_BROKER_USERNAME \
             -e PACT_BROKER_PASSWORD \
             pactfoundation/pact-cli:latest \
-            broker create-or-update-version-tag \
+            broker create-or-update-version \
             --pacticipant ShippingService \
             --version ${GIT_COMMIT} \
             --tag production
