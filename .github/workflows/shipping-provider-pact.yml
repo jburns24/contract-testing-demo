@@ -1,3 +1,4 @@
+# TODO: build Docker image and push to GHCR in the deploy step below
 name: Pact Provider - Shipping Service
 
 on:
@@ -80,3 +81,24 @@ jobs:
             --pacticipant ShippingService \
             --version ${GIT_COMMIT} \
             --to production
+
+      - name: Deploy (placeholder)
+        run: echo "Deploying ShippingService ... (placeholder)"
+
+      - name: Tag provider version as production
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          GIT_COMMIT=$(git rev-parse HEAD)
+          # Mark this provider version as deployed to production in the Pact Broker
+          docker run --rm \
+            -e PACT_BROKER_BASE_URL \
+            -e PACT_BROKER_USERNAME \
+            -e PACT_BROKER_PASSWORD \
+            pactfoundation/pact-cli:latest \
+            broker create-or-update-version-tag \
+            --pacticipant ShippingService \
+            --version ${GIT_COMMIT} \
+            --tag production
