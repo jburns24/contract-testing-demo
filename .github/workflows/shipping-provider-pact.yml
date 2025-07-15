@@ -1,0 +1,104 @@
+name: Pact Provider - Shipping Service
+
+on:
+  push:
+    paths:
+      - 'src/shipping/**'
+      - 'src/frontend/pacts/**/*.json'
+      - '.github/workflows/shipping-provider-pact.yml'
+  pull_request:
+    paths:
+      - 'src/shipping/**'
+      - 'src/frontend/pacts/**/*.json'
+      - '.github/workflows/shipping-provider-pact.yml'
+  workflow_dispatch:
+
+jobs:
+  pact-provider-tests:
+    name: Run provider pact verification tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src/shipping
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: cargo-build-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            cargo-build-${{ runner.os }}-
+
+      - name: Build shipping service (release)
+        run: cargo build --release
+
+      - name: Start shipping service
+        env:
+          SHIPPING_PORT: 9090
+        run: |
+          ./target/release/shipping &
+          SERVICE_PID=$!
+          echo "Shipping service started with PID $SERVICE_PID on port $SHIPPING_PORT"
+          # Give the service time to start
+          sleep 5
+
+      - name: Verify contract against provider
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          GIT_COMMIT=$(git rev-parse HEAD)
+
+          docker run --rm --network host \
+            -e PACT_BROKER_BASE_URL \
+            -e PACT_BROKER_USERNAME \
+            -e PACT_BROKER_PASSWORD \
+            pactfoundation/pact-cli:latest \
+            verify \
+            --provider-base-url=http://localhost:9090 \
+            --provider=ShippingService \
+            --broker-url=$PACT_BROKER_BASE_URL \
+            --broker-username=$PACT_BROKER_USERNAME \
+            --broker-password=$PACT_BROKER_PASSWORD \
+            --publish-verification-results \
+            --provider-app-version=$GIT_COMMIT \
+            --provider-branch=$GITHUB_REF_NAME
+
+      - name: Can I Deploy?
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          GIT_COMMIT=$(git rev-parse HEAD)
+
+          docker run --rm \
+            -e PACT_BROKER_BASE_URL \
+            -e PACT_BROKER_USERNAME \
+            -e PACT_BROKER_PASSWORD \
+            pactfoundation/pact-cli:latest \
+            broker can-i-deploy \
+            --pacticipant ShippingService \
+            --version $GIT_COMMIT \
+            --to production
