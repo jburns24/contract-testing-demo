@@ -31,4 +31,10 @@
 	  <Folder Include="proto\" />
 	</ItemGroup>
 
+  <Target Name="CopyProtoForBuild" BeforeTargets="BeforeBuild">
+    <MakeDir Directories="$(MSBuildProjectDirectory)/proto" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)/../../pb/demo.proto"
+          DestinationFiles="$(MSBuildProjectDirectory)/proto/demo.proto"
+          SkipUnchangedFiles="true" />
+  </Target>
 </Project>
