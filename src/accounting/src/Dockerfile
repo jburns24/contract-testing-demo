@@ -7,17 +7,17 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["/src/accounting/", "Accounting/"]
 COPY ["/pb/demo.proto", "Accounting/proto/"]
-RUN dotnet restore "./Accounting/Accounting.csproj" -r linux-$TARGETARCH
+RUN dotnet restore "./Accounting/src/Accounting.csproj" -r linux-$TARGETARCH
 WORKDIR "/src/Accounting"
 
-RUN dotnet build "./Accounting.csproj" -r linux-$TARGETARCH -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./src/Accounting.csproj" -r linux-$TARGETARCH -c $BUILD_CONFIGURATION -o /app/build
 
 # -----------------------------------------------------------------------------
 
 FROM builder AS publish
 ARG TARGETARCH
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Accounting.csproj" -r linux-$TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./src/Accounting.csproj" -r linux-$TARGETARCH -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # -----------------------------------------------------------------------------
 
