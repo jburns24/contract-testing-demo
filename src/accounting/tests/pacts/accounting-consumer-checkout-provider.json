@@ -43,6 +43,52 @@
       },
       "pending": false,
       "type": "Asynchronous/Messages"
+    },
+    {
+      "contents": {
+        "content": {
+          "items": [
+            {
+              "cost": {
+                "currencyCode": "USD",
+                "nanos": 0,
+                "units": 3
+              },
+              "item": {
+                "productId": "SKU-1",
+                "quantity": 2
+              }
+            }
+          ],
+          "orderId": "123",
+          "shippingAddress": {
+            "city": "Anytown",
+            "country": "USA",
+            "state": "CA",
+            "streetAddress": "123 Main St",
+            "zipCode": "94016"
+          },
+          "shippingCost": {
+            "currencyCode": "USD",
+            "nanos": 0,
+            "units": 5
+          },
+          "shippingTrackingId": "trk-1"
+        },
+        "contentType": "application/json",
+        "encoded": false
+      },
+      "description": "order-result message",
+      "metadata": {
+        "contentType": "application/json"
+      },
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "An order has been successfully processed"
+        }
+      ],
+      "type": "Asynchronous/Messages"
     }
   ],
   "metadata": {

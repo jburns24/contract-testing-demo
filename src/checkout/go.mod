@@ -8,6 +8,7 @@ require (
 	github.com/open-feature/go-sdk v1.15.1
 	github.com/open-feature/go-sdk-contrib/hooks/open-telemetry v0.3.6
 	github.com/open-feature/go-sdk-contrib/providers/flagd v0.3.0
+	github.com/pact-foundation/pact-go/v2 v2.4.1
 	go.opentelemetry.io/contrib/bridges/otelslog v0.12.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0
@@ -60,7 +61,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/open-feature/flagd-schemas v0.2.9-0.20250127221449-bb763438abc5 // indirect
 	github.com/open-feature/flagd/core v0.11.2 // indirect
-	github.com/pact-foundation/pact-go/v2 v2.4.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/spf13/afero v1.12.0 // indirect

@@ -40,6 +40,7 @@ public class ConsumerMessagePactTests : IDisposable
     {
         _messagePact
             .ExpectsToReceive("order-result message")
+            .Given("An order has been successfully processed")
             .WithMetadata("contentType", "application/json")
             .WithJsonContent(new
             {
