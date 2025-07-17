@@ -38,47 +38,138 @@
         "encoded": false
       },
       "description": "order-result message",
-      "metadata": {
-        "contentType": "application/json"
-      },
-      "pending": false,
-      "type": "Asynchronous/Messages"
-    },
-    {
-      "contents": {
-        "content": {
-          "items": [
-            {
-              "cost": {
-                "currencyCode": "USD",
-                "nanos": 0,
-                "units": 3
-              },
-              "item": {
-                "productId": "SKU-1",
-                "quantity": 2
+      "matchingRules": {
+        "body": {
+          "$.items": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
               }
-            }
-          ],
-          "orderId": "123",
-          "shippingAddress": {
-            "city": "Anytown",
-            "country": "USA",
-            "state": "CA",
-            "streetAddress": "123 Main St",
-            "zipCode": "94016"
+            ]
           },
-          "shippingCost": {
-            "currencyCode": "USD",
-            "nanos": 0,
-            "units": 5
+          "$.items[*].cost.currencyCode": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
           },
-          "shippingTrackingId": "trk-1"
-        },
-        "contentType": "application/json",
-        "encoded": false
+          "$.items[*].cost.nanos": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.items[*].cost.units": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.items[*].item.productId": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.items[*].item.quantity": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.orderId": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingAddress.city": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingAddress.country": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingAddress.state": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingAddress.streetAddress": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingAddress.zipCode": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingCost.currencyCode": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingCost.nanos": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingCost.units": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          },
+          "$.shippingTrackingId": {
+            "combine": "AND",
+            "matchers": [
+              {
+                "match": "type"
+              }
+            ]
+          }
+        }
       },
-      "description": "order-result message",
       "metadata": {
         "contentType": "application/json"
       },

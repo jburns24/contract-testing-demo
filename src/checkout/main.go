@@ -21,7 +21,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 	otelhooks "github.com/open-feature/go-sdk-contrib/hooks/open-telemetry/pkg"
 	flagd "github.com/open-feature/go-sdk-contrib/providers/flagd/pkg"
@@ -32,7 +31,6 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
-	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -49,11 +47,12 @@ import (
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	pb "github.com/open-telemetry/opentelemetry-demo/src/checkout/genproto/oteldemo"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/kafka"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/money"
+	"github.com/open-telemetry/opentelemetry-demo/src/checkout/ports"
+	"github.com/open-telemetry/opentelemetry-demo/src/checkout/adapters"
 )
 
 //go:generate go install google.golang.org/protobuf/cmd/protoc-gen-go
@@ -139,7 +138,11 @@ type checkout struct {
 	paymentSvcAddr        string
 	kafkaBrokerSvcAddr    string
 	pb.UnimplementedCheckoutServiceServer
-	KafkaProducerClient     sarama.AsyncProducer
+	
+	// Hexagonal Architecture: Core depends on ports, not implementations
+	orderEventPublisher     ports.OrderEventPublisher
+	
+	// External service clients (adapters for outbound calls)
 	shippingSvcClient       pb.ShippingServiceClient
 	productCatalogSvcClient pb.ProductCatalogServiceClient
 	cartSvcClient           pb.CartServiceClient
@@ -228,11 +231,20 @@ func main() {
 
 	svc.kafkaBrokerSvcAddr = os.Getenv("KAFKA_ADDR")
 
+	// Initialize order event publisher (hexagonal architecture port)
 	if svc.kafkaBrokerSvcAddr != "" {
-		svc.KafkaProducerClient, err = kafka.CreateKafkaProducer([]string{svc.kafkaBrokerSvcAddr}, logger)
+		kafkaProducer, err := kafka.CreateKafkaProducer([]string{svc.kafkaBrokerSvcAddr}, logger)
 		if err != nil {
 			logger.Error(err.Error())
+			// Use a no-op implementation if Kafka is unavailable
+			svc.orderEventPublisher = &adapters.NoOpOrderEventPublisher{}
+		} else {
+			// Use Kafka adapter implementation
+			svc.orderEventPublisher = adapters.NewKafkaOrderEventPublisher(kafkaProducer, logger)
 		}
+	} else {
+		// Use no-op implementation when Kafka is not configured
+		svc.orderEventPublisher = &adapters.NoOpOrderEventPublisher{}
 	}
 
 	logger.Info(fmt.Sprintf("service config: %+v", svc))
@@ -366,10 +378,14 @@ func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (
 		logger.Info(fmt.Sprintf("order confirmation email sent to %q", req.Email))
 	}
 
-	// send to kafka only if kafka broker address is set
-	if cs.kafkaBrokerSvcAddr != "" {
-		logger.Info("sending to postProcessor")
-		cs.sendToPostProcessor(ctx, orderResult)
+	// Publish order completion event using the port (hexagonal architecture)
+	// The core business logic doesn't know HOW the event is published (Kafka, etc.)
+	// It only knows WHAT it needs to do (publish the order completion)
+	logger.Info("publishing order completion event")
+	if err := cs.orderEventPublisher.PublishOrderCompleted(ctx, orderResult); err != nil {
+		// In a production system, you might want to implement retry logic or dead letter queues
+		logger.Error(fmt.Sprintf("failed to publish order completion event: %+v", err))
+		// Don't fail the entire order for a publishing error
 	}
 
 	resp := &pb.PlaceOrderResponse{Order: orderResult}
@@ -590,98 +606,6 @@ func (cs *checkout) shipOrder(ctx context.Context, address *pb.Address, items []
 	}
 
 	return shipResp.TrackingID, nil
-}
-
-func (cs *checkout) sendToPostProcessor(ctx context.Context, result *pb.OrderResult) {
-	message, err := proto.Marshal(result)
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to marshal message to protobuf: %+v", err))
-		return
-	}
-
-	msg := sarama.ProducerMessage{
-		Topic: kafka.Topic,
-		Value: sarama.ByteEncoder(message),
-	}
-
-	// Inject tracing info into message
-	span := createProducerSpan(ctx, &msg)
-	defer span.End()
-
-	// Send message and handle response
-	startTime := time.Now()
-	select {
-	case cs.KafkaProducerClient.Input() <- &msg:
-		select {
-		case successMsg := <-cs.KafkaProducerClient.Successes():
-			span.SetAttributes(
-				attribute.Bool("messaging.kafka.producer.success", true),
-				attribute.Int("messaging.kafka.producer.duration_ms", int(time.Since(startTime).Milliseconds())),
-				attribute.KeyValue(semconv.MessagingKafkaMessageOffset(int(successMsg.Offset))),
-			)
-			logger.Info(fmt.Sprintf("Successful to write message. offset: %v, duration: %v", successMsg.Offset, time.Since(startTime)))
-		case errMsg := <-cs.KafkaProducerClient.Errors():
-			span.SetAttributes(
-				attribute.Bool("messaging.kafka.producer.success", false),
-				attribute.Int("messaging.kafka.producer.duration_ms", int(time.Since(startTime).Milliseconds())),
-			)
-			span.SetStatus(otelcodes.Error, errMsg.Err.Error())
-			logger.Error(fmt.Sprintf("Failed to write message: %v", errMsg.Err))
-		case <-ctx.Done():
-			span.SetAttributes(
-				attribute.Bool("messaging.kafka.producer.success", false),
-				attribute.Int("messaging.kafka.producer.duration_ms", int(time.Since(startTime).Milliseconds())),
-			)
-			span.SetStatus(otelcodes.Error, "Context cancelled: "+ctx.Err().Error())
-			logger.Warn(fmt.Sprintf("Context canceled before success message received: %v", ctx.Err()))
-		}
-	case <-ctx.Done():
-		span.SetAttributes(
-			attribute.Bool("messaging.kafka.producer.success", false),
-			attribute.Int("messaging.kafka.producer.duration_ms", int(time.Since(startTime).Milliseconds())),
-		)
-		span.SetStatus(otelcodes.Error, "Failed to send: "+ctx.Err().Error())
-		logger.Error(fmt.Sprintf("Failed to send message to Kafka within context deadline: %v", ctx.Err()))
-		return
-	}
-
-	ffValue := cs.getIntFeatureFlag(ctx, "kafkaQueueProblems")
-	if ffValue > 0 {
-		logger.Info("Warning: FeatureFlag 'kafkaQueueProblems' is activated, overloading queue now.")
-		for i := 0; i < ffValue; i++ {
-			go func(i int) {
-				cs.KafkaProducerClient.Input() <- &msg
-				_ = <-cs.KafkaProducerClient.Successes()
-			}(i)
-		}
-		logger.Info(fmt.Sprintf("Done with #%d messages for overload simulation.", ffValue))
-	}
-}
-
-func createProducerSpan(ctx context.Context, msg *sarama.ProducerMessage) trace.Span {
-	spanContext, span := tracer.Start(
-		ctx,
-		fmt.Sprintf("%s publish", msg.Topic),
-		trace.WithSpanKind(trace.SpanKindProducer),
-		trace.WithAttributes(
-			semconv.PeerService("kafka"),
-			semconv.NetworkTransportTCP,
-			semconv.MessagingSystemKafka,
-			semconv.MessagingDestinationName(msg.Topic),
-			semconv.MessagingOperationPublish,
-			semconv.MessagingKafkaDestinationPartition(int(msg.Partition)),
-		),
-	)
-
-	carrier := propagation.MapCarrier{}
-	propagator := otel.GetTextMapPropagator()
-	propagator.Inject(spanContext, carrier)
-
-	for key, value := range carrier {
-		msg.Headers = append(msg.Headers, sarama.RecordHeader{Key: []byte(key), Value: []byte(value)})
-	}
-
-	return span
 }
 
 func (cs *checkout) isFeatureFlagEnabled(ctx context.Context, featureFlagName string) bool {
