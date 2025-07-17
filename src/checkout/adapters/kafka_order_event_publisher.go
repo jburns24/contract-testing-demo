@@ -16,15 +16,15 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/IBM/sarama"
+	pb "github.com/open-telemetry/opentelemetry-demo/src/checkout/genproto/oteldemo"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/kafka"
 	"github.com/open-telemetry/opentelemetry-demo/src/checkout/ports"
-	pb "github.com/open-telemetry/opentelemetry-demo/src/checkout/genproto/oteldemo"
 )
 
 // KafkaOrderEventPublisher implements the OrderEventPublisher port using Apache Kafka.
 // This adapter handles all Kafka-specific concerns including:
 // - Message serialization and routing
-// - Producer error handling and retries  
+// - Producer error handling and retries
 // - Distributed tracing context propagation
 // - Performance monitoring and metrics
 // - It implements the OrderEventPublisher port

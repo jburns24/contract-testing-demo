@@ -4,7 +4,7 @@ package ports
 
 import (
 	"context"
-	
+
 	pb "github.com/open-telemetry/opentelemetry-demo/src/checkout/genproto/oteldemo"
 )
 

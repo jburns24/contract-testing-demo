@@ -40,7 +40,7 @@ func TestOrderResultCreationFromActualBusinessLogic_Legacy(t *testing.T) {
 //
 // The original tests below demonstrated contract testing at the adapter level,
 // directly testing Kafka-specific serialization and the sendToPostProcessor method.
-// 
+//
 // The new approach tests at the port level (OrderEventPublisher interface),
 // which provides:
 // 1. Technology independence - tests don't depend on Kafka

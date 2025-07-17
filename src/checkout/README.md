@@ -9,7 +9,7 @@ The checkout service implements **Hexagonal Architecture** to decouple business 
 ### Core Components
 
 - **Business Logic**: Pure domain logic for order processing (inside the hexagon)
-- **Ports**: Interfaces defining what the business logic needs (boundaries of the hexagon)  
+- **Ports**: Interfaces defining what the business logic needs (boundaries of the hexagon)
 - **Adapters**: Infrastructure implementations of ports (outside the hexagon)
 
 ### Port Interfaces
@@ -35,7 +35,7 @@ type OrderEventPublisher interface {
 - Error handling and logging
 - Message serialization to protobuf
 
-#### NoOpOrderEventPublisher  
+#### NoOpOrderEventPublisher
 **Purpose**: No-operation implementation for testing or when messaging is disabled
 **Location**: `adapters/kafka_order_event_publisher.go`
 **Use Cases**:
@@ -60,7 +60,7 @@ This service publishes order completion events when orders are successfully proc
 ```json
 {
   "orderId": "string",
-  "shippingTrackingId": "string", 
+  "shippingTrackingId": "string",
   "shippingCost": {
     "currencyCode": "string",
     "units": "integer",
@@ -68,7 +68,7 @@ This service publishes order completion events when orders are successfully proc
   },
   "shippingAddress": {
     "streetAddress": "string",
-    "city": "string", 
+    "city": "string",
     "state": "string",
     "country": "string",
     "zipCode": "string"
@@ -80,7 +80,7 @@ This service publishes order completion events when orders are successfully proc
         "quantity": "integer"
       },
       "cost": {
-        "currencyCode": "string", 
+        "currencyCode": "string",
         "units": "integer",
         "nanos": "integer"
       }
@@ -125,7 +125,7 @@ This service publishes order completion events when orders are successfully proc
   },
   "shippingAddress": {
     "streetAddress": "123 Main St",
-    "city": "Anytown", 
+    "city": "Anytown",
     "state": "CA",
     "country": "USA",
     "zipCode": "94016"
@@ -190,7 +190,7 @@ The hexagonal architecture enables superior contract testing by testing at the *
 **Port-Based Testing** (Current Approach):
 - Tests exercise the `OrderEventPublisher` port interface through dependency injection
 - Contract tests call `checkoutService.orderEventPublisher.PublishOrderCompleted()` - same as real business logic
-- Business logic validation independent of Kafka infrastructure  
+- Business logic validation independent of Kafka infrastructure
 - Clean mocking through simple interface implementations
 - Contract verification focuses on business patterns and validates the port abstraction
 
@@ -208,7 +208,7 @@ The hexagonal architecture enables superior contract testing by testing at the *
 - **Benefits**: Technology-independent, easy mocking, clear business focus
 
 #### Legacy Tests (Historical Reference)
-- **File**: `checkout_message_provider_test.go` 
+- **File**: `checkout_message_provider_test.go`
 - **Status**: No-op tests preserved for historical comparison
 - **Purpose**: Documents the evolution from adapter-specific to port-based testing
 
@@ -230,7 +230,7 @@ go test -v -run TestOrderEventPublisherContract
 ```
 
 **Legacy Tests** (Historical Reference - Will Skip):
-```sh 
+```sh
 go test -v -run Legacy
 ```
 
@@ -281,10 +281,10 @@ The contract tests implement a critical innovation: they exercise the **actual p
 messageHandlers := message.Handlers{
     "order-result message": func(states []models.ProviderState) (message.Body, message.Metadata, error) {
         orderResult := createOrderResultFromBusinessLogicPatterns()
-        
+
         // THIS IS KEY: Call through the same port interface as PlaceOrder()
         err := checkoutService.orderEventPublisher.PublishOrderCompleted(ctx, orderResult)
-        
+
         // Capture and verify what was published through the port
         return convertOrderResultToConsumerFormat(capturedOrder), metadata, nil
     },
@@ -304,7 +304,7 @@ This approach provides:
 If tests fail with "library 'pact_ffi' not found":
 
 1. Ensure pact-go is installed: `go install github.com/pact-foundation/pact-go/v2@latest`
-2. Install FFI library: `sudo pact-go install`  
+2. Install FFI library: `sudo pact-go install`
 3. Verify installation: `pact-go -v`
 
 ### ADR Documentation

@@ -23,12 +23,12 @@ type checkout struct {
 
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
     // ... business logic ...
-    
+
     // Direct call to infrastructure adapter - PROBLEMATIC
     if err := cs.sendToPostProcessor(ctx, orderResult); err != nil {
         return nil, err
     }
-    
+
     return response, nil
 }
 ```
@@ -75,12 +75,12 @@ type checkout struct {
 
 func (cs *checkout) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
     // ... business logic ...
-    
+
     // Call through port interface - CLEAN SEPARATION
     if err := cs.orderEventPublisher.PublishOrderCompleted(ctx, orderResult); err != nil {
         return nil, err
     }
-    
+
     return response, nil
 }
 ```
@@ -109,27 +109,27 @@ func TestOrderEventPublisherContract(t *testing.T) {
             capturedOrder = order
         },
     }
-    
+
     // Create checkout service with the capture mock
     checkoutService := &checkout{
         orderEventPublisher: captureMock,
     }
-    
+
     // Test business logic patterns through the port interface
     messageHandlers := message.Handlers{
         "order-result message": func(states []models.ProviderState) (message.Body, message.Metadata, error) {
             order := createOrderResultFromBusinessLogicPatterns()
-            
+
             // ✅ KEY IMPROVEMENT: Exercise the actual port interface!
             // This calls through the same business logic as PlaceOrder()
             err := checkoutService.orderEventPublisher.PublishOrderCompleted(ctx, order)
-            
+
             // Verify and convert the captured order for contract verification
-            return convertOrderResultToConsumerFormat(capturedOrder), 
+            return convertOrderResultToConsumerFormat(capturedOrder),
                    message.Metadata{"contentType": "application/json"}, nil
         },
     }
-    
+
     // Verify contracts through the port abstraction layer
     verifier.VerifyProvider(t, provider.VerifyRequest{...})
 }

@@ -47,7 +47,7 @@ func TestOrderEventPublisherContract(t *testing.T) {
 			orderResult := createOrderResultFromBusinessLogicPatterns()
 
 			// ✅ THIS IS THE KEY: Exercise the actual port interface!
-			// This calls through the checkout service's orderEventPublisher, 
+			// This calls through the checkout service's orderEventPublisher,
 			// testing the same business logic flow as the real PlaceOrder method
 			err := checkoutService.orderEventPublisher.PublishOrderCompleted(context.Background(), orderResult)
 			if err != nil {
