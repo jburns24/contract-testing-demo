@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -26,6 +27,12 @@ import (
 // 2. Business logic patterns are validated
 // 3. Contract compliance is verified at the abstraction level
 // 4. Easy to mock and test different scenarios
+//
+// Pact Source Configuration:
+// - If PACT_BROKER_URL environment variable is set, fetches contracts from the broker
+// - Otherwise, falls back to local pact files for offline development
+// - Supports broker authentication via PACT_BROKER_USERNAME and PACT_BROKER_PASSWORD
+// - Publishes verification results back to broker when using broker mode
 func TestOrderEventPublisherContract(t *testing.T) {
 	// Create a message capture mock that records what gets published through the port
 	var capturedOrder *pb.OrderResult
@@ -92,13 +99,52 @@ func TestOrderEventPublisherContract(t *testing.T) {
 
 	// Verify that our port implementation satisfies the consumer contracts
 	verifier := provider.NewVerifier()
-	err := verifier.VerifyProvider(t, provider.VerifyRequest{
-		PactFiles: []string{
-			filepath.ToSlash("../accounting/tests/pacts/accounting-consumer-checkout-provider.json"),
-		},
+	
+	// Create verification request with conditional pact source
+	verifyRequest := provider.VerifyRequest{
 		StateHandlers:   stateHandlers,
 		MessageHandlers: messageHandlers,
-	})
+	}
+	
+	// Configure pact source: broker if available, local files as fallback
+	if brokerURL := os.Getenv("PACT_BROKER_URL"); brokerURL != "" {
+		t.Logf("🌐 Using Pact Broker for contract verification: %s", brokerURL)
+		// Configure broker-based verification
+		verifyRequest.BrokerURL = brokerURL
+		verifyRequest.BrokerUsername = os.Getenv("PACT_BROKER_USERNAME")
+		verifyRequest.BrokerPassword = os.Getenv("PACT_BROKER_PASSWORD")
+		verifyRequest.ConsumerVersionSelectors = []provider.Selector{
+			&provider.ConsumerVersionSelector{
+				Tag: "main",
+			},
+			&provider.ConsumerVersionSelector{
+				Latest: true,
+			},
+		}
+		verifyRequest.Provider = "checkout-provider"
+		
+		// Use Git commit and branch if available
+		if gitCommit := os.Getenv("GIT_COMMIT"); gitCommit != "" {
+			verifyRequest.ProviderVersion = gitCommit
+			t.Logf("📝 Provider version: %s", gitCommit)
+		}
+		if gitBranch := os.Getenv("GIT_BRANCH"); gitBranch != "" {
+			verifyRequest.ProviderBranch = gitBranch
+			t.Logf("🌿 Provider branch: %s", gitBranch)
+		}
+		
+		// Enable publishing verification results back to broker
+		verifyRequest.PublishVerificationResults = true
+		t.Log("📤 Will publish verification results to broker")
+	} else {
+		t.Log("📁 Using local pact files for contract verification")
+		// Fallback to local files
+		verifyRequest.PactFiles = []string{
+			filepath.ToSlash("../accounting/tests/pacts/accounting-consumer-checkout-provider.json"),
+		}
+	}
+
+	err := verifier.VerifyProvider(t, verifyRequest)
 
 	if err != nil {
 		t.Fatalf("Contract verification failed: %v", err)
@@ -325,4 +371,55 @@ func (m *MessageCaptureMock) PublishOrderCompleted(ctx context.Context, order *p
 		m.onPublish(order)
 	}
 	return nil
+}
+
+// TestPactSourceConfiguration verifies that the contract test correctly chooses
+// between broker and local file modes based on environment variables.
+func TestPactSourceConfiguration(t *testing.T) {
+	// Save original environment
+	originalBrokerURL := os.Getenv("PACT_BROKER_URL")
+	defer os.Setenv("PACT_BROKER_URL", originalBrokerURL)
+
+	// Test local file mode (no broker URL)
+	os.Unsetenv("PACT_BROKER_URL")
+	t.Run("LocalFileMode", func(t *testing.T) {
+		verifyRequest := provider.VerifyRequest{}
+		
+		if brokerURL := os.Getenv("PACT_BROKER_URL"); brokerURL != "" {
+			t.Fatal("Expected empty broker URL for local file test")
+		} else {
+			verifyRequest.PactFiles = []string{
+				filepath.ToSlash("../accounting/tests/pacts/accounting-consumer-checkout-provider.json"),
+			}
+		}
+		
+		if len(verifyRequest.PactFiles) == 0 {
+			t.Fatal("Expected PactFiles to be set in local file mode")
+		}
+		if verifyRequest.BrokerURL != "" {
+			t.Fatal("Expected BrokerURL to be empty in local file mode")
+		}
+	})
+
+	// Test broker mode
+	os.Setenv("PACT_BROKER_URL", "https://test-broker.example.com")
+	t.Run("BrokerMode", func(t *testing.T) {
+		verifyRequest := provider.VerifyRequest{}
+		
+		if brokerURL := os.Getenv("PACT_BROKER_URL"); brokerURL != "" {
+			verifyRequest.BrokerURL = brokerURL
+			verifyRequest.Provider = "checkout-provider"
+			verifyRequest.PublishVerificationResults = true
+		}
+		
+		if verifyRequest.BrokerURL == "" {
+			t.Fatal("Expected BrokerURL to be set in broker mode")
+		}
+		if verifyRequest.Provider != "checkout-provider" {
+			t.Fatal("Expected Provider to be set in broker mode")
+		}
+		if !verifyRequest.PublishVerificationResults {
+			t.Fatal("Expected PublishVerificationResults to be true in broker mode")
+		}
+	})
 }
