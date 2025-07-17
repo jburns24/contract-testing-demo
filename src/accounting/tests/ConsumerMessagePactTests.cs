@@ -92,8 +92,8 @@ public class ConsumerMessagePactTests : IDisposable
                 // Instantiate Consumer with a no-op logger
                 // Obtain Consumer type via reflection (it's internal)
                 var consumerType = Type.GetType("Accounting.Consumer, Accounting")!;
-                var loggerFactory = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
-                var loggerGeneric = typeof(Microsoft.Extensions.Logging.Abstractions.NullLogger<>).MakeGenericType(consumerType);
+                var loggerFactory = NullLoggerFactory.Instance;
+                var loggerGeneric = typeof(NullLogger<>).MakeGenericType(consumerType);
                 var loggerField = loggerGeneric.GetField("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
                 var logger = loggerField!.GetValue(null);
 
