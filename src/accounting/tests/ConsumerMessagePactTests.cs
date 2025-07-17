@@ -7,6 +7,8 @@ using Xunit;
 using Oteldemo;
 using Microsoft.Extensions.Logging.Abstractions;
 using Accounting;
+using Match = PactNet.Matchers.Match;
+
 
 namespace tests;
 
@@ -44,39 +46,39 @@ public class ConsumerMessagePactTests : IDisposable
             .WithMetadata("contentType", "application/json")
             .WithJsonContent(new
             {
-                orderId = "123",
-                shippingTrackingId = "trk-1",
+                orderId = Match.Type("123"),
+                shippingTrackingId = Match.Type("trk-1"),
                 shippingCost = new
                 {
-                    currencyCode = "USD",
-                    units = 5,
-                    nanos = 0
+                    currencyCode = Match.Type("USD"),
+                    units = Match.Type(5),
+                    nanos = Match.Type(0)
                 },
                 shippingAddress = new
                 {
-                    streetAddress = "123 Main St",
-                    city = "Anytown",
-                    state = "CA",
-                    country = "USA",
-                    zipCode = "94016"
+                    streetAddress = Match.Type("123 Main St"),
+                    city = Match.Type("Anytown"),
+                    state = Match.Type("CA"),
+                    country = Match.Type("USA"),
+                    zipCode = Match.Type("94016")
                 },
-                items = new[]
+                items = Match.Type(new[]
                 {
                     new
                     {
                         item = new
                         {
-                            productId = "SKU-1",
-                            quantity = 2
+                            productId = Match.Type("SKU-1"),
+                            quantity = Match.Type(2)
                         },
                         cost = new
                         {
-                            currencyCode = "USD",
-                            units = 3,
-                            nanos = 0
+                            currencyCode = Match.Type("USD"),
+                            units = Match.Type(3),
+                            nanos = Match.Type(0)
                         }
                     }
-                }
+                })
             })
             .Verify<JsonElement>(jsonElement =>
             {
