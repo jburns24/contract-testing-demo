@@ -69,7 +69,7 @@ jobs:
 
           # Run the port-based contract verification tests
           # These tests exercise the OrderEventPublisher port interface with hexagonal architecture
-          go test -v -run TestOrderEventPublisherContract --no-fail-fast
+          go test -v -run TestOrderEventPublisherContract
 
       - name: Can I Deploy?
         env:
