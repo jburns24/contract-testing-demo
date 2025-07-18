@@ -2,6 +2,7 @@ name: Pact Consumer - Accounting
 
 on:
   push:
+    branches: [main]
     paths:
       - 'src/accounting/src/**'
       - 'src/accounting/tests/**'
@@ -34,6 +35,11 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+
+      - name: Copy protobuf files
+        run: |
+          # Copy proto files from the shipping service to the accounting service
+          make generate-protobuf
 
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
