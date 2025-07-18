@@ -77,7 +77,7 @@ jobs:
           PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
           PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
-          # Skip deployment check if broker URL is not configured
+          # Skip deployment check if pact broker URL is not configured
           if [ -z "$PACT_BROKER_BASE_URL" ]; then
             echo "PACT_BROKER_URL secret not set – skipping deployment check.";
             exit 0;

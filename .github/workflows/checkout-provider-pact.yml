@@ -56,7 +56,7 @@ jobs:
           # Expose commit SHA and branch name to the test binary so it can publish results
           export GIT_COMMIT=$(git rev-parse HEAD)
           export GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          
+
           # Run the port-based contract verification tests
           # These tests exercise the OrderEventPublisher port interface with hexagonal architecture
           go test -v -run TestOrderEventPublisherContract --no-fail-fast
@@ -99,7 +99,7 @@ jobs:
           PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
           PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
-          # Skip tagging if broker URL is not configured
+          # Skip tagging if pact broker URL is not configured
           if [ -z "$PACT_BROKER_BASE_URL" ]; then
             echo "PACT_BROKER_URL secret not set – skipping production tagging.";
             exit 0;

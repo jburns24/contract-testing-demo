@@ -99,13 +99,13 @@ func TestOrderEventPublisherContract(t *testing.T) {
 
 	// Verify that our port implementation satisfies the consumer contracts
 	verifier := provider.NewVerifier()
-	
+
 	// Create verification request with conditional pact source
 	verifyRequest := provider.VerifyRequest{
 		StateHandlers:   stateHandlers,
 		MessageHandlers: messageHandlers,
 	}
-	
+
 	// Configure pact source: broker if available, local files as fallback
 	if brokerURL := os.Getenv("PACT_BROKER_URL"); brokerURL != "" {
 		t.Logf("🌐 Using Pact Broker for contract verification: %s", brokerURL)
@@ -122,7 +122,7 @@ func TestOrderEventPublisherContract(t *testing.T) {
 			},
 		}
 		verifyRequest.Provider = "checkout-provider"
-		
+
 		// Use Git commit and branch if available
 		if gitCommit := os.Getenv("GIT_COMMIT"); gitCommit != "" {
 			verifyRequest.ProviderVersion = gitCommit
@@ -132,7 +132,7 @@ func TestOrderEventPublisherContract(t *testing.T) {
 			verifyRequest.ProviderBranch = gitBranch
 			t.Logf("🌿 Provider branch: %s", gitBranch)
 		}
-		
+
 		// Enable publishing verification results back to broker
 		verifyRequest.PublishVerificationResults = true
 		t.Log("📤 Will publish verification results to broker")
@@ -384,7 +384,7 @@ func TestPactSourceConfiguration(t *testing.T) {
 	os.Unsetenv("PACT_BROKER_URL")
 	t.Run("LocalFileMode", func(t *testing.T) {
 		verifyRequest := provider.VerifyRequest{}
-		
+
 		if brokerURL := os.Getenv("PACT_BROKER_URL"); brokerURL != "" {
 			t.Fatal("Expected empty broker URL for local file test")
 		} else {
@@ -392,7 +392,7 @@ func TestPactSourceConfiguration(t *testing.T) {
 				filepath.ToSlash("../accounting/tests/pacts/accounting-consumer-checkout-provider.json"),
 			}
 		}
-		
+
 		if len(verifyRequest.PactFiles) == 0 {
 			t.Fatal("Expected PactFiles to be set in local file mode")
 		}
@@ -405,13 +405,13 @@ func TestPactSourceConfiguration(t *testing.T) {
 	os.Setenv("PACT_BROKER_URL", "https://test-broker.example.com")
 	t.Run("BrokerMode", func(t *testing.T) {
 		verifyRequest := provider.VerifyRequest{}
-		
+
 		if brokerURL := os.Getenv("PACT_BROKER_URL"); brokerURL != "" {
 			verifyRequest.BrokerURL = brokerURL
 			verifyRequest.Provider = "checkout-provider"
 			verifyRequest.PublishVerificationResults = true
 		}
-		
+
 		if verifyRequest.BrokerURL == "" {
 			t.Fatal("Expected BrokerURL to be set in broker mode")
 		}
