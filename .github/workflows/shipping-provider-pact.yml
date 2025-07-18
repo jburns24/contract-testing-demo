@@ -52,7 +52,6 @@ jobs:
             cargo-build-${{ runner.os }}-
 
       - name: Run provider pact verification tests
-        # Limit to the integration test that runs pact_verifier
         env:
           # Provide broker details for the test code (PACT_BROKER_URL) **and** for the Pact CLI (PACT_BROKER_BASE_URL)
           PACT_BROKER_URL: ${{ secrets.PACT_BROKER_URL }}

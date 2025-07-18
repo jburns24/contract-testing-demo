@@ -1,9 +1,11 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34701.34
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounting", "Accounting.csproj", "{C66C35E2-DF04-4DCF-8F6A-87B6D6433FF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Accounting", "src\Accounting.csproj", "{C66C35E2-DF04-4DCF-8F6A-87B6D6433FF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tests", "tests\tests.csproj", "{A4972F80-24B1-40AC-BC8B-02333832A632}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{C66C35E2-DF04-4DCF-8F6A-87B6D6433FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C66C35E2-DF04-4DCF-8F6A-87B6D6433FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C66C35E2-DF04-4DCF-8F6A-87B6D6433FF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4972F80-24B1-40AC-BC8B-02333832A632}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4972F80-24B1-40AC-BC8B-02333832A632}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4972F80-24B1-40AC-BC8B-02333832A632}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4972F80-24B1-40AC-BC8B-02333832A632}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

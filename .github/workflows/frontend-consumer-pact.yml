@@ -44,7 +44,7 @@ jobs:
           PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
           PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
-          # Skip publish if broker URL is not configured
+          # Skip publish if pact broker URL is not configured
           if [ -z "$PACT_BROKER_BASE_URL" ]; then
             echo "PACT_BROKER_URL secret not set – skipping publish step.";
             exit 0;
