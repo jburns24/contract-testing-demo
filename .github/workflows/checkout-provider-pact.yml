@@ -36,9 +36,13 @@ jobs:
       - name: Install Pact FFI library
         run: |
           # Install pact-go tool and FFI library for contract verification
-          sudo go get github.com/pact-foundation/pact-go/v2
-          sudo go install github.com/pact-foundation/pact-go/v2
-          sudo pact-go -l DEBUG install
+          go install github.com/pact-foundation/pact-go/v2@latest
+
+          # Add Go bin directory to PATH for this step
+          export PATH=$PATH:$(go env GOPATH)/bin
+
+          # Install FFI library with proper PATH
+          pact-go -l DEBUG install
 
       - name: Download dependencies
         run: go mod download
