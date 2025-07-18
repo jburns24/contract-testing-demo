@@ -21,9 +21,8 @@ jobs:
   pact-consumer-tests:
     name: Run consumer pact tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/accounting
+
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,6 +34,7 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
+        working-directory: src/accounting
 
       - name: Copy protobuf files
         run: |
@@ -43,9 +43,11 @@ jobs:
 
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
+        working-directory: src/accounting
 
       - name: Run consumer pact tests
         run: dotnet test tests/tests.csproj --no-build --configuration Release --verbosity normal
+        working-directory: src/accounting
 
       - name: Publish Pact contracts (optional)
         env:
