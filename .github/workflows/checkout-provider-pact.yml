@@ -44,7 +44,7 @@ jobs:
 
           # Verify pact-go is accessible
           which pact-go
-          pact-go --version
+          pact-go version
 
           # Install FFI library with sudo but preserve PATH
           sudo -E env "PATH=$PATH" pact-go -l DEBUG install
