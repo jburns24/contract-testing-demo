@@ -38,8 +38,8 @@ jobs:
 
       - name: Copy protobuf files
         run: |
-          # Copy proto files from the shipping service to the accounting service
-          make generate-protobuf
+          mkdir -p src/accounting/src/protos/
+          cp pb/demo.proto src/accounting/src/protos/
 
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
