@@ -41,8 +41,8 @@ jobs:
           # Add Go bin directory to PATH for this step
           export PATH=$PATH:$(go env GOPATH)/bin
 
-          # Install FFI library with proper PATH
-          pact-go -l DEBUG install
+          # Install FFI library to a user-writable location
+          sudo pact-go -l DEBUG install
 
       - name: Download dependencies
         run: go mod download
