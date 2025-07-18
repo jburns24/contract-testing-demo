@@ -39,7 +39,8 @@ jobs:
           go install github.com/pact-foundation/pact-go/v2@latest
 
           # Add Go bin directory to PATH for this step
-          export PATH=$PATH:$(go env GOPATH)/bin
+          export GOPATH=$HOME/go
+          export PATH=$PATH:$GOPATH/bin
 
           # Install FFI library to a user-writable location
           sudo pact-go -l DEBUG install
